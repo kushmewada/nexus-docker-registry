@@ -1,0 +1,32 @@
+[
+  {
+    "name": "Docker - Delete unused manifests and images (docker-hosted)",
+    "type": "repository.docker.gc",
+    "cron": "0 0 1 * * ?",
+    "properties": { "repositoryName": "docker-hosted", "deployOffset": "24" }
+  },
+  {
+    "name": "Docker - Delete incomplete uploads",
+    "type": "repository.docker.upload-purge",
+    "cron": "0 30 1 * * ?",
+    "properties": { "age": "24" }
+  },
+  {
+    "name": "Docker - Purge unused cached images (docker-proxy)",
+    "type": "repository.purge-unused",
+    "cron": "0 0 2 * * ?",
+    "properties": { "repositoryName": "docker-proxy", "lastUsed": "${CLEANUP_UNUSED_DAYS}" }
+  },
+  {
+    "name": "Admin - Compact blob store (docker-blobs)",
+    "type": "blobstore.compact",
+    "cron": "0 0 3 ? * SUN",
+    "properties": { "blobstoreName": "docker-blobs" }
+  },
+  {
+    "name": "Admin - Backup H2 database",
+    "type": "h2.backup.task",
+    "cron": "0 0 0 * * ?",
+    "properties": { "location": "/nexus-data/backup" }
+  }
+]

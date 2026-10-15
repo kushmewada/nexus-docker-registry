@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Lint shell scripts, compose file and nginx config
+        run: make lint
+
+      - name: Validate JSON config
+        run: for f in config/*.json config/repositories/*.json; do jq empty "$f"; done
+
+      - name: Lint Dockerfile
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: examples/hello-nexus/Dockerfile
+
+  e2e:
+    name: End-to-end (deploy → bootstrap → push/pull)
+    needs: lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Create .env with throwaway credentials
+        run: |
+          cp .env.example .env
+          sed -i "s|^NEXUS_ADMIN_PASSWORD=.*|NEXUS_ADMIN_PASSWORD=$(openssl rand -hex 16)|" .env
+          sed -i "s|^CI_PASSWORD=.*|CI_PASSWORD=$(openssl rand -hex 16)|" .env
+
+      - name: Deploy stack
+        run: make up
+
+      - name: Bootstrap Nexus
+        run: make bootstrap
+
+      - name: Bootstrap is idempotent
+        run: make bootstrap
+
+      - name: Smoke test
+        run: make smoke-test
+
+      - name: Backup
+        run: KEEP=1 make backup && ls -lh backups/
+
+      - name: Dump logs on failure
+        if: failure()
+        run: docker compose logs --no-color --tail=300
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v
