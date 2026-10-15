@@ -1,5 +1,5 @@
 # tiny test image, the smoke test pushes this to nexus
-FROM busybox:1.37
+FROM busybox:1.38
 
 LABEL org.opencontainers.image.title="hello-nexus" \
       org.opencontainers.image.description="Sample artifact published to a private Nexus Docker registry"
