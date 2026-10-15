@@ -27,7 +27,7 @@ jobs:
         run: for f in config/*.json config/repositories/*.json; do jq empty "$f"; done
 
       - name: Lint Dockerfile
-        uses: hadolint/hadolint-action@v3.1.0
+        uses: hadolint/hadolint-action@v3.5.0
         with:
           dockerfile: examples/hello-nexus/Dockerfile
 
